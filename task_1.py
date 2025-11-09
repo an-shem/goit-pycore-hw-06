@@ -1,6 +1,12 @@
 from collections import UserDict
 
 
+class InvalidNumberError(Exception):
+    """Ошибка: номер некорректный."""
+
+    pass
+
+
 class Field:
     def __init__(self, value: str):
         self.value = value
@@ -14,7 +20,13 @@ class Name(Field):
 
 
 class Phone(Field):
-    pass
+    def __init__(self, phone):
+        phone = phone.strip()
+        if len(phone) != 10:
+            raise InvalidNumberError(
+                f"The number '{phone}' is invalid! It must be 10 characters long."
+            )
+        super().__init__(phone)
 
 
 class Record:
@@ -26,16 +38,21 @@ class Record:
         return f"Contact name: {self.name.value}, phones: {'; '.join(p.value for p in self.phones)}"
 
     def add_phone(self, phone: str):
-        phone = phone.strip()
-        if len(phone) != 10:
-            print("The phone number must consist of 10 digits.")
-            return
-        for p in self.phones:
-            if p.value == phone:
-                print(f"Contact {self.name} already has the telephone number {phone}.")
-                return
-        self.phones.append(Phone(phone))
-        print(f"The phone number {phone} has been added to the contact {self.name}.")
+        try:
+            ph = Phone(phone)
+            for p in self.phones:
+                if p.value == phone:
+                    print(
+                        f"Contact {self.name} already has the telephone number {phone}."
+                    )
+                    return
+            self.phones.append(ph)
+        except InvalidNumberError as e:
+            print("Error:", e)
+        else:
+            print(
+                f"The phone number {phone} has been added to the contact {self.name}."
+            )
 
     def edit_phone(self, old_phone, new_phone):
         if not old_phone or not new_phone or old_phone == new_phone:
@@ -56,7 +73,7 @@ class Record:
         print("Phone number not found.")
         return None
 
-    def delete_phone(self, phone):
+    def remove_phone(self, phone):
         if not phone or len(phone) != 10:
             print("Phone numbers entered incorrectly.")
             return
@@ -122,7 +139,7 @@ found_phone = john.find_phone("5555555555")
 print(f"{john.name}: {found_phone}")  # Виведення: 5555555555
 # # Видалення запису Jane
 book.delete("Jane")
-john.delete_phone("1112223333")
+john.remove_phone("1112223333")
 
 for name, record in book.data.items():
     print(record)
